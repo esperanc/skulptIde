@@ -1,0 +1,27 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+        "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="style/codemirror.css">
+    <link rel="stylesheet" type="text/css" href="style/solarized.css">
+    <link rel="stylesheet" type="text/css" href="style/interactive.css">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script>
+    <script src="javascript/codemirror.js"></script>
+    <script src="javascript/matchbrackets.js"></script>
+    <script src="javascript/python.js"></script>
+    <script src="javascript/skulpt.min.js"></script>
+    <script src="javascript/skulpt-stdlib.js"></script>
+    <script src="javascript/processing.min.js"></script>
+    <script src="javascript/pythoninteractive.js"></script>
+</head>
+<body>
+<textarea id="code" cols="40" rows="10" style="width:300px;height:300px;">
+</textarea><br /> 
+
+<script type="text/javascript"> 
+setupPythonShell('code');
+$(".CodeMirror").css("height", "200px").css("width","600px");
+</script>
+</body>
+</html>

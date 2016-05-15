@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+    "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="style/codemirror.css">
+    <link rel="stylesheet" type="text/css" href="style/solarized.css"> 
+    <link rel="stylesheet" type="text/css" href="style/skulptide.css"> 
+    <script src="javascript/jquery.min.js"></script>
+    <script src="javascript/codemirror.js"></script>
+    <script src="javascript/matchbrackets.js"></script>
+    <script src="javascript/python.js"></script>
+    <script src="javascript/skulpt.min.js"></script>
+    <script src="javascript/skulpt-stdlib.js"></script>
+    <script src="javascript/processing.min.js"></script>
+    <script src="javascript/pythonide.js"></script>
+    <script src="javascript/lz-string.js"></script>
+    <script src="javascript/FileSaver.min.js"></script>
+</head>
+<body>
+
+    <div class="maindiv">
+        <div class="IDE">
+            <h3>Simple Online Python IDE</h3>
+            <p>Implemented with <a href="http://www.skulpt.org/">Skulpt</a> and <a href="https://codemirror.net/">CodeMirror</a></p> 
+
+            <div id="menu">
+                <label class="button" onclick="runit()"> Run</label> 
+                <label class="button" onclick="stopit()">Stop</label> 
+                <label class="button" onclick="clearit()">Clear</label> 
+                <label class="button" for="loadfile">Upload</label>
+                    <input type="file" id="loadfile" name="files[]" style="visibility:hidden;display:none;" onchange="loadit(this)"></input>
+                
+                <label class="button" onclick="saveit()">Download as</label>
+                <input id="savefilename" type="text" value="saveprogram.py"/>
+                <br/><br/>
+            </div>
+        </div>
+        
+        <div id="centralarea">
+            <div id="canvas">
+            </div>
+            <div class="editor IDE">
+                <textarea id="code" cols="60" rows="20">
+                </textarea><br /> 
+            </div>
+        </div>
+    </div>
+    
+    <h4 class="IDE ">Output</h4>
+    <pre id="output"></pre> 
+
+    <div id="showurl" style="visibility:hidden;">
+        <label class="button" onclick="showUrl()">Show URL for this sketch</label><br/>
+        <a id="myurl" href="" title=""></a>
+    </div>
+
+    <script type="text/javascript"> 
+
+    // These control the behavior of the script
+    var parms = {
+        program :  // Initial skulpt program to show in the editor
+            ["from processing import *",
+            "",
+            "def draw():",
+            "    line(0,0,100,100)",
+            "",
+            "run()"].join("\n"),
+        autoRun: false, // Whether to run the initial program after load
+        hideIde: false,  // Whether to hide the IDE buttons if autoRun is true
+        showUrl: false,  // Whether to show an interactive button for showing an url for this sketch
+    };
+
+    // Obtain the url parameter with name theParameter. Returns false
+    // if not specified.
+    function getParameter(theParameter) { 
+        var params = window.location.search.substr(1).split('&');
+
+        for (var i = 0; i < params.length; i++) {
+            var p=params[i].split('=');
+            if (p[0] == theParameter) {
+                if (p.length>1)
+                    return p[1]; 
+                else
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    // Callback for "load"
+    function loadit(input) {
+        var fileobj = input.files[0];
+        var reader = new FileReader();
+
+        // Closure to capture the file information.
+        reader.onload = (function (theFile) {
+            return function (e) {
+                var text = e.target.result;
+                setProgram(text);
+                // clear the input element so that a new load on the same file will work
+                input.value = "";
+            };
+        }) (fileobj);
+
+        // Read in the file as a data URL.
+        reader.readAsText(fileobj);
+    }
+
+    // Callback for "download as"
+    function saveit() {
+
+        var data = getProgram();
+        var filename = document.getElementById("savefilename").value;
+        var blob = new Blob([data], {type: "text/plain;charset=utf-8"});
+        saveAs(blob, filename);
+    }
+
+    // Setup 
+    function setup () {
+
+        // Setup skulpt and editor
+        setupPythonIDE('code','output','canvas');
+
+        // Set the initial program
+        setProgram (parms.program);
+
+        if (parms.autoRun) runit();
+
+    }
+
+    // Loads program from a given url using XMLHttprequest (must be on the same domain)
+    function loadUrl (url) {
+        function reqListener () {
+            console.log(url+" loaded");
+            parms.program = this.responseText;
+            setup ();
+        }
+
+        var oReq = new XMLHttpRequest();
+        oReq.addEventListener("load", reqListener);
+        oReq.open("GET", url); 
+        oReq.send();
+    }
+
+    // Includes an encoded url for this sketch at the bottom of the screen
+    function showUrl() {
+        var link = document.URL;
+        var i = link.indexOf("?");
+        if (i>=0) link = link.substr(0,i);
+        var pgm = getProgram(); 
+        var s1 = LZString.compressToEncodedURIComponent(pgm);
+        var s2 = encodeURIComponent(pgm);
+        if (s1.length<s2.length)
+            link = link+"?lzsrc="+s1;
+        else 
+            link = link+"?source="+s2;
+        $("#myurl").attr("href",link).text(link);
+    }
+
+    // Whether to start the program immediately
+    parms.autoRun = getParameter("autorun") || getParameter("autoRun");
+
+    // Whether to hide the IDE if parms.autoRun
+    parms.hideIde = getParameter("hideide") || getParameter("hideIde");
+
+    // Whether to show the "showurl" button
+    parms.showUrl = getParameter("showurl") || getParameter("showUrl");
+
+    // Unhide the showurl div if requested
+    if (parms.showUrl) {
+        document.getElementById("showurl").style.visibility = "visible";
+    }
+
+
+    // See if there is a source program encoded in the url
+    var source = getParameter ("source");
+    if (source) { 
+        parms.program = decodeURIComponent(source); 
+    }
+    var lzsource = getParameter("lzsrc");
+    if (lzsource) {
+        parms.program = LZString.decompressFromEncodedURIComponent(lzsource);
+    }
+
+    // Whether to hide interface
+    if (parms.hideIde) {
+        var elements = document.getElementsByClassName('IDE');
+        for(var i=0; i<elements.length; i++) {
+            elements[i].style.display = "none";
+        }
+    }
+
+    // Load an external program if its url is passed as parameter 'program'
+    var programUrl = getParameter("program");
+    if (programUrl) {
+        // Load from file
+        loadUrl (decodeURIComponent(programUrl));
+    } 
+    else { 
+        // Load the initial program
+        setup();
+    }
+
+</script>
+
+</body>
+</html>
