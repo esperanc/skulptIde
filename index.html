@@ -22,9 +22,10 @@
 
     <div class="maindiv">
         <div class="IDE">
-            <h3>Online Python development environment</h3>
-            <p> See <a href="http://esperanc.github.io/skulptIde/pages.html">Github site</a> for more info.</p> 
-
+            <div id="title">
+                <h3>Online Python development environment</h3>
+                <p> See <a href="http://esperanc.github.io/skulptIde/pages.html">Github site</a> for more info.</p> 
+            </div>
             <div id="menu">
                 <label class="button" onclick="runit()"> Run</label> 
                 <label class="button" onclick="stopit()">Stop</label> 
@@ -48,10 +49,12 @@
         </div>
     </div>
     
-    <h4 class="IDE">Output</h4>
-    <pre id="output"></pre> 
+    <div id="outputpanel">
+        <h4 class="IDE">Output</h4>
+        <pre id="output"></pre> 
+    </div>
 
-    <div id="showurl" style="visibility:hidden;">
+    <div id="showurl" style="display:none;">
         <label class="button" onclick="showUrl()">Show URL for this sketch</label><br/>
         <a id="myurl" href="" title=""></a>
     </div>
@@ -67,6 +70,8 @@
             "    line(0,0,100,100)",
             "",
             "run()"].join("\n"),
+        noTitle: false,  // Whether to hide the title
+        noOutput: false, // Whether to hide the output panel
         autoRun: false, // Whether to run the initial program after load
         hideIde: false,  // Whether to hide the IDE buttons if autoRun is true
         showUrl: false,  // Whether to show an interactive button for showing an url for this sketch
@@ -126,8 +131,10 @@
         // Set the initial program
         setProgram (parms.program);
 
-        if (parms.autoRun) runit();
-
+        // Arrange to run it automatically if requested
+        if (parms.autoRun) {
+            setTimeout(function() { runit() }, 50)
+        }
     }
 
     // Loads program from a given url using XMLHttprequest (must be on the same domain)
@@ -156,23 +163,43 @@
             link = link+"?lzsrc="+s1;
         else 
             link = link+"?source="+s2;
+        if (parms.autoRun) link = link+"&autorun";
+        if (parms.hideIde) link = link+"&hideide";
+        if (parms.noTitle) link = link+"&notitle";        
+        if (parms.noOutput) link = link+"&nooutput";
         $("#myurl").attr("href",link).text(link);
     }
 
     // Whether to start the program immediately
     parms.autoRun = getParameter("autorun") || getParameter("autoRun");
 
-    // Whether to hide the IDE if parms.autoRun
-    parms.hideIde = getParameter("hideide") || getParameter("hideIde");
+    // Whether to hide the IDE 
+    parms.hideIde = getParameter("hideide") || getParameter("hideIde") ||
+                    getParameter("noide") || getParameter("noIde");
+
+    // Whether to hide the title 
+    parms.noTitle = getParameter("notitle") || getParameter("noTitle");
+
+    // Whether to hide the output panel 
+    parms.noOutput = getParameter("nooutput") || getParameter("noOutput");
 
     // Whether to show the "showurl" button
     parms.showUrl = getParameter("showurl") || getParameter("showUrl");
 
     // Unhide the showurl div if requested
     if (parms.showUrl) {
-        document.getElementById("showurl").style.visibility = "visible";
+        document.getElementById("showurl").style.display = "inline";
     }
 
+    // Hide the title div if requested
+    if (parms.noTitle) {
+        document.getElementById("title").style.display = "none";
+    }
+
+    // Hide the outputpanel div if requested
+    if (parms.noOutput) {
+        document.getElementById("outputpanel").style.display = "none";
+    }
 
     // See if there is a source program encoded in the url
     var source = getParameter ("source");

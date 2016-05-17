@@ -68,8 +68,9 @@
                 <h4>Basic usage</h4>
                 <p>Type in the source code in the editor and click <span class="button">Run</span>. Errors and other output are shown in the Output pane at the bottom of the screen. </p>
                 <p>If your code has an infinite loop, hit <span class="button">Stop</span> in order to avoid consuming too many resources of your browser.</p>
-                <p>Hit <span class="button">Clear</span> to clear the output and graphics canvas.</p>
+                <p>Hit <span class="button">Clear</span> to clear the output and graphics canvas. If the program is still running, it is stopped first.</p>
                 <p>Save often! Use the <span class="button">Download as</span> button to save your work to your local machine using the filename in the text box beside it. To load a file you have in your local computer to the IDE, use the <span class="button">Upload</span> button.
+
                 <h4>Writing Processing sketches</h4> If you are writing a program that uses the Processing module, i.e., a "sketch", you must include <code>from processing import *</code> as the first line of your sketch and <code>run()</code> as the last line. Also, you should probably write your own <code>draw()</code> and <code>setup()</code> functions somewhere in between...</p>
 
                 <h4>URL parameters</h4>
@@ -96,7 +97,14 @@
 
                   <dt><code>autorun</code></dt> <dd>Makes the code in the editor start running at once.</dd>
 
-                  <dt><code>hideide</code></dt> <dd>hides the editor, title and buttons so that only the output and graphics canvas are shown. Obviously, this is only useful together with <code>autorun</code>.</dd>
+                  <dt><code>noide</code></dt> <dd>Hides the editor, title and buttons so that only the output and graphics canvas are shown. Obviously, this is only useful together with <code>autorun</code>.</dd>
+
+                  <dt><code>notitle</code></dt> <dd>Hides the title. This is useful if you want to embed the IDE as an
+                  iframe in your site.</dd>
+
+                  <dt><code>nooutput</code></dt> <dd>Hides the output panel. This is useful if you want to hide output messages from a graphical sketch, for instance.</dd>
+
+
                 </dl>
 
             </section>
