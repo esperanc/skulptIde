@@ -64,6 +64,7 @@
     // These control the behavior of the script
     var parms = {
         program :  // Initial skulpt program to show in the editor
+            typeof(Storage) !== "undefined" && localStorage.getItem("skulptIdeProgram") || 
             ["from processing import *",
             "",
             "def draw():",
@@ -228,6 +229,16 @@
     else { 
         // Load the initial program
         setup();
+    }
+
+    // Prevent silently navigating away from the IDE
+    window.onbeforeunload = function() {
+      return "Have you saved your program?";
+    }
+
+    // Try to save the program to local storage before leaving
+    window.onunload = function () {
+        localStorage.setItem("skulptIdeProgram", getProgram());
     }
 
 </script>
