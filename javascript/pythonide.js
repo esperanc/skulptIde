@@ -48,6 +48,9 @@ var setProgram = function (program) {}
 // Returns the contents of the editor
 var getProgram = function () {}
 
+// The codemirror editor
+var editor;
+
 // 
 // Call this function after setting up a <textarea> for the program (id=codeId),
 // a <pre> for text output (id=outputId) and a <div> for the graphical output (id = canvasId).
@@ -181,6 +184,7 @@ function setupPythonIDE (codeId,outputId,canvasId) {
                 }
             }
         });
+        
     }
 
     createEditor ();

@@ -34,7 +34,7 @@
                     <input type="file" id="loadfile" name="files[]" style="visibility:hidden;display:none;" onchange="loadit(this)"></input>
                 
                 <label class="button" onclick="saveit()">Download as</label>
-                <input id="savefilename" type="text" value="saveprogram.py"/>
+                <input id="savefilename" type="text" value="program.py"/>
                 <br/><br/>
             </div>
         </div>
@@ -71,12 +71,17 @@
             "    line(0,0,100,100)",
             "",
             "run()"].join("\n"),
+        programName: typeof(Storage) !== "undefined" && localStorage.getItem("skulptIdeProgramName") ||
+            "saveprogram.py", 
         noTitle: false,  // Whether to hide the title
         noOutput: false, // Whether to hide the output panel
         autoRun: false, // Whether to run the initial program after load
         hideIde: false,  // Whether to hide the IDE buttons if autoRun is true
         showUrl: false,  // Whether to show an interactive button for showing an url for this sketch
     };
+
+    // Number of changes to the program after save
+    var changeCount = 0;
 
     // Obtain the url parameter with name theParameter. Returns false
     // if not specified.
@@ -95,6 +100,12 @@
         return false;
     }
 
+    // Saves the current state to the browser's store
+    function storeProgram () {
+        localStorage.setItem("skulptIdeProgram", getProgram());
+        localStorage.setItem("skulptIdeProgramName", document.getElementById("savefilename").value);
+    }
+
     // Callback for "load"
     function loadit(input) {
         var fileobj = input.files[0];
@@ -105,6 +116,7 @@
             return function (e) {
                 var text = e.target.result;
                 setProgram(text);
+                storeProgram();
                 // clear the input element so that a new load on the same file will work
                 input.value = "";
             };
@@ -121,6 +133,7 @@
         var filename = document.getElementById("savefilename").value;
         var blob = new Blob([data], {type: "text/plain;charset=utf-8"});
         saveAs(blob, filename);
+        changeCount = 0;
     }
 
     // Setup 
@@ -129,14 +142,22 @@
         // Setup skulpt and editor
         setupPythonIDE('code','output','canvas');
 
+        // Arrange for counting the total number of changes
+        editor.on('change', function(cm) {changeCount++;});
+
         // Set the initial program
         setProgram (parms.program);
+
+        // Reset the change Counter
+        changeCount = 0;
 
         // Arrange to run it automatically if requested
         if (parms.autoRun) {
             setTimeout(function() { runit() }, 50)
         }
     }
+
+    
 
     // Loads program from a given url using XMLHttprequest (must be on the same domain)
     function loadUrl (url) {
@@ -170,6 +191,9 @@
         if (parms.noOutput) link = link+"&nooutput";
         $("#myurl").attr("href",link).text(link);
     }
+
+    // Load the program name into the box
+    document.getElementById("savefilename").value = parms.programName;
 
     // Whether to start the program immediately
     parms.autoRun = getParameter("autorun") || getParameter("autoRun");
@@ -233,13 +257,12 @@
 
     // Prevent silently navigating away from the IDE
     window.onbeforeunload = function() {
-      return "Have you saved your program?";
+        if (changeCount==0) return null;
+        return "Have you saved your program?";
     }
 
     // Try to save the program to local storage before leaving
-    window.onunload = function () {
-        localStorage.setItem("skulptIdeProgram", getProgram());
-    }
+    window.onunload = storeProgram;
 
 </script>
 
