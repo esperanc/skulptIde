@@ -24,12 +24,18 @@
 // These will hold handles to asynchronous code that skulpt sets up. We need them to
 // implement the stopit function
 var intervalFuncVars = [];
+var timeoutFuncVars = [];
 
 // Stops any asynchronous functions still running
 var stopit = function () {
     for (var i = 0; i < intervalFuncVars.length; i++) {
         window.clearInterval (intervalFuncVars[i]);
     }
+    intervalFuncVars = [];
+    for (var i = 0; i < timeoutFuncVars.length; i++) {
+        window.clearTimeout (timeoutFuncVars[i]);
+    }
+    timeoutFuncVars = [];
 }
 
 //
@@ -81,6 +87,7 @@ function setupPythonIDE (codeId,outputId,canvasId) {
 
     // Clears outputId and canvasId
     clearit = function () {
+        stopit();
         var mypre = document.getElementById(outputId); 
         mypre.innerHTML = "";   
         var can = document.getElementById(canvasId);
@@ -120,6 +127,12 @@ function setupPythonIDE (codeId,outputId,canvasId) {
         // are caught and sent to the output and so we know which asynchronous
         // processes were started
         var oldSetInterval = window.setInterval;
+        var oldSetTimeout = window.setTimeout;
+
+        var restoreAsync = function () {
+            window.setInterval = setInterval = oldSetInterval;
+            window.setTimeout = setTimeout = oldSetTimeout;
+        }
 
         window.setInterval = setInterval = function (f,t) {
             var handle = 
@@ -127,8 +140,8 @@ function setupPythonIDE (codeId,outputId,canvasId) {
                 try {
                     f()
                 } catch (err) {
-                    // Restore the old setInterval function
-                    window.setInterval = setInterval = oldSetInterval;
+                    // Report error and abort
+                    restoreAsync();
                     outf(err.toString());
                     stopit();
                 }
@@ -137,21 +150,37 @@ function setupPythonIDE (codeId,outputId,canvasId) {
         }
 
 
-           var myPromise = Sk.misceval.asyncToPromise(function() {
-               return Sk.importMainWithBody("<stdin>", false, prog, true);
-           });
+        window.setTimeout = setTimeout = function (f,t) {
+            var handle = 
+            oldSetTimeout (function () {
+                try {
+                    f();
+                } catch (err) {
+                    // Report error and abort
+                    restoreAsync();
+                    outf(err.toString());
+                    stopit();
+                }
+            },t);
+            timeoutFuncVars.push(handle);
+        }
 
-           myPromise.then(function(mod) {
-               // console.log('success');
-           },
-               function(err) {
-                var msg = err.toString();
-                console.log(msg);
-                outf(msg);
-           });
+
+       var myPromise = Sk.misceval.asyncToPromise(function() {
+           return Sk.importMainWithBody("<stdin>", false, prog, true);
+       });
+
+       myPromise.then(function(mod) {
+           // console.log('success');
+       },
+           function(err) {
+            var msg = err.toString();
+            console.log(msg);
+            outf(msg);
+       });
 
         // Restore the old setInterval function
-        window.setInterval = setInterval = oldSetInterval;
+        restoreAsync();
     } 
 
     //
