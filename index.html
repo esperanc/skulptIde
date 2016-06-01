@@ -27,7 +27,7 @@
                 <p> See <a href="http://esperanc.github.io/skulptIde/pages.html">Github site</a> for more info.</p> 
             </div>
             <div id="menu">
-                <label class="button" onclick="runit()"> Run</label> 
+                <label class="button" onclick="runProgram()"> Run</label> 
                 <label class="button" onclick="stopit()">Stop</label> 
                 <label class="button" onclick="clearit()">Clear</label> 
                 <label class="button" for="loadfile">Upload</label>
@@ -104,6 +104,12 @@
     function storeProgram () {
         localStorage.setItem("skulptIdeProgram", getProgram());
         localStorage.setItem("skulptIdeProgramName", document.getElementById("savefilename").value);
+    }
+
+    // Callback for "run"
+    function runProgram() {
+        storeProgram();
+        runit();
     }
 
     // Callback for "load"
@@ -248,7 +254,10 @@
     var programUrl = getParameter("program");
     if (programUrl) {
         // Load from file
-        loadUrl (decodeURIComponent(programUrl));
+        programUrl = decodeURIComponent(programUrl);
+        var components = programUrl.split("/")
+        document.getElementById("savefilename").value = components[components.length-1];
+        loadUrl (programUrl);
     } 
     else { 
         // Load the initial program

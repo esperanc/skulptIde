@@ -12,7 +12,8 @@ $dir    = './demoSketches';
 echo "<ul>";
 foreach (scandir($dir) as $i => $filename) {
     if ($i>=2) {
-        echo "<li> <a href=index.html?autorun&program=$dir/$filename> $filename </a></li>";
+    	$url = rawurlencode("$dir/$filename");
+        echo "<li> <a href=index.html?autorun&program=$url> $filename </a></li>";
     }
 }
 echo "</ul>";
