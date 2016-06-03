@@ -38,6 +38,22 @@ var stopit = function () {
     timeoutFuncVars = [];
 }
 
+
+// Capture the uncaught exception handler
+var saveUncaughtException = Sk.uncaughtException;
+
+
+// Must capture the setInterval function so that processing errors
+// are caught and sent to the output and so we know which asynchronous
+// processes were started
+var oldSetInterval = window.setInterval;
+var oldSetTimeout = window.setTimeout;
+
+var restoreAsync = function () {
+    window.setInterval = setInterval = oldSetInterval;
+    window.setTimeout = setTimeout = oldSetTimeout;
+}
+
 //
 // Temporary functions  overwritten by setupPythonIDE
 //
@@ -123,16 +139,6 @@ function setupPythonIDE (codeId,outputId,canvasId) {
         Sk.configure({output:outf, read:builtinRead}); 
         (Sk.TurtleGraphics || (Sk.TurtleGraphics = {})).target = canvasId;
 
-        // Must capture the setInterval function so that processing errors
-        // are caught and sent to the output and so we know which asynchronous
-        // processes were started
-        var oldSetInterval = window.setInterval;
-        var oldSetTimeout = window.setTimeout;
-
-        var restoreAsync = function () {
-            window.setInterval = setInterval = oldSetInterval;
-            window.setTimeout = setTimeout = oldSetTimeout;
-        }
 
         window.setInterval = setInterval = function (f,t) {
             var handle = 
@@ -165,19 +171,24 @@ function setupPythonIDE (codeId,outputId,canvasId) {
             timeoutFuncVars.push(handle);
         }
 
-
-       var myPromise = Sk.misceval.asyncToPromise(function() {
-           return Sk.importMainWithBody("<stdin>", false, prog, true);
-       });
-
-       myPromise.then(function(mod) {
-           // console.log('success');
-       },
-           function(err) {
-            var msg = err.toString();
-            console.log(msg);
+        // Capture the error message
+        Sk.uncaughtException = function (e) {
+            var msg = e.toString();
             outf(msg);
-       });
+            stopit();
+            restoreAsync();
+            saveUncaughtException(e);
+        }
+
+        var myPromise = Sk.misceval.asyncToPromise(function() {
+            return Sk.importMainWithBody("<stdin>", false, prog, true);
+        });
+
+        myPromise.then(function(mod) {
+        // console.log('success');
+        },
+           Sk.uncaughtException 
+        );
 
         // Restore the old setInterval function
         restoreAsync();

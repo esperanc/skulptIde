@@ -27,7 +27,8 @@
                 <p> See <a href="http://esperanc.github.io/skulptIde/pages.html">Github site</a> for more info.</p> 
             </div>
             <div id="menu">
-                <label class="button" onclick="runProgram()"> Run</label> 
+                <label class="button" onclick="newProgram()">New</label> 
+                <label class="button" onclick="runProgram()">Run</label> 
                 <label class="button" onclick="stopit()">Stop</label> 
                 <label class="button" onclick="clearit()">Clear</label> 
                 <label class="button" for="loadfile">Upload</label>
@@ -110,6 +111,18 @@
     function runProgram() {
         storeProgram();
         runit();
+    }
+
+    // Callback for "new"
+    function newProgram() {
+        if (changeCount!=0) {
+            var yes = confirm ("Are you sure you want to start a new sketch?");
+            if (!yes) return;
+        } 
+        clearit();
+        setProgram("");
+        changeCount = 0;
+        document.getElementById("savefilename").value = "saveprogram.py";
     }
 
     // Callback for "load"
